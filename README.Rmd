@@ -1,0 +1,199 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,warning = FALSE, error = FALSE, message = FALSE,
+  comment = "#>"
+)
+```
+
+# Joice-Lindsay
+### Carregando Pacotes
+```{r}
+library(tidyverse)
+```
+
+
+### Carregando as bases de dados individuas
+
+```{r}
+casa <- readr::read_rds("data/casa.rds")
+citomeria <- readr::read_rds("data/citomeria.rds")
+morf_mot_vig <- readr::read_rds("data/morf_mot_vig.rds")
+```
+
+### Juntando as bases de dados
+
+```{r}
+my_data_set <- left_join(citomeria,casa %>% 
+                           select(-codigo,-nascim,-datacoleta,-salto),
+                         by=c("grupo","touro","coleta"))
+my_data_set <- left_join(my_data_set, morf_mot_vig %>% 
+                           select(-codigo,-nascim,-datacoleta,-salto),
+                         by=c("grupo","touro","coleta"))
+```
+
+### Gráficos ao longo do tempo
+
+```{r}
+my_variables <- names(my_data_set[8:length(my_data_set)])
+for(i in seq_along(my_variables)){
+  my_vari <- my_variables[i]
+  da <- my_data_set %>% 
+    select(grupo, coleta, touro, my_vari) %>% 
+    rename("Y" = my_vari)
+
+  my_plot <- da %>%
+    group_by(coleta,grupo) %>% 
+    summarise(y = mean(Y,na.rm=TRUE),
+              n=n(),
+              stderr = sd(Y,na.rm=TRUE)/sqrt(n)) %>% 
+    ggplot(aes(x=coleta, y=y, fill=grupo)) +
+    geom_col(position = "dodge",color="black") +
+    theme_bw() +
+    labs(x="Coleta", y=my_vari) +
+    scale_fill_manual(values = c("lightgray","coral") ) +
+    geom_errorbar(aes(ymin=y-stderr, ymax=y+stderr), width=.2,
+                 position=position_dodge(.9))
+  print(my_plot)
+}
+```
+
+### Correlação CASA
+
+```{r}
+my_data_set %>% 
+  filter(grupo=="C") %>% 
+  drop_na() %>% 
+  select(concdose:alh, -peso.x, -peso.y) %>% 
+  cor() %>% 
+  corrplot::corrplot()
+```
+
+
+```{r}
+my_data_set %>% 
+  filter(grupo=="C") %>% 
+  drop_na() %>% 
+  select(concdose:alh, -peso.x, -peso.y) %>% 
+  cor() %>% 
+  corrplot::corrplot()
+```
+
+
+### Correlação citomeria
+
+```{r}
+my_data_set %>% 
+  filter(grupo=="C") %>% 
+  drop_na() %>% 
+  select(fitc_a_median_t0:o2_pi_a_m , -peso.x, -peso.y) %>% 
+  select(ends_with("m")) %>% 
+  cor() %>% 
+  corrplot::corrplot()
+```
+
+
+```{r}
+my_data_set %>% 
+  filter(grupo=="T") %>% 
+  drop_na() %>% 
+  select(fitc_a_median_t0:o2_pi_a_m , -peso.x, -peso.y) %>% 
+  select(ends_with("m")) %>% 
+  cor() %>% 
+  corrplot::corrplot()
+```
+
+### Correlação morfologia motilidadade e vigor
+
+```{r}
+my_data_set %>% 
+  filter(grupo=="C") %>% 
+  drop_na() %>% 
+  select(conc:totais , -peso.x, -peso.y) %>% 
+  cor() %>% 
+  corrplot::corrplot()
+```
+
+
+```{r}
+my_data_set %>% 
+  filter(grupo=="T") %>% 
+  drop_na() %>% 
+  select(conc:totais , -peso.x, -peso.y) %>% 
+  cor() %>% 
+  corrplot::corrplot()
+```
+
+
+```{r}
+touros <- my_data_set %>% pull(touro) %>% unique()
+for( i in 1:length(touros)){
+  
+  dsa <- my_data_set %>%  filter(touro == touros[i]) %>% 
+    select(fitc_a_median_t0:totais) 
+  
+  if(i == 1 ) {df <- apply(dsa, 2, sum,na.rm=TRUE)
+  }else{
+    dfa <- apply(dsa, 2, sum,na.rm=TRUE)
+    df <- rbind(df,dfa)
+  }
+}
+row.names(df) <- touros
+```
+
+
+### Análise de Agrupamento Hierárquico CASA
+
+```{r}
+    da_pad<-vegan::decostand( df %>% as.data.frame() %>% 
+                               select(concdose:alh), 
+                      method = "standardize",
+                      na.rm=TRUE)
+    da_pad_euc<-vegan::vegdist(da_pad,"euclidean") 
+    da_pad_euc_ward<-hclust(da_pad_euc, method="ward.D")
+    plot(da_pad_euc_ward, 
+         ylab="Distância Euclidiana",
+         xlab="Acessos", hang=-1,
+         col="blue", las=1,
+         cex=.6,lwd=1.5);box()
+    grupo<-cutree(da_pad_euc_ward,3)
+```
+
+### Análise de Agrupamento Hierárquico CITOMERIA
+
+```{r}
+    da_pad<-vegan::decostand( df %>% as.data.frame() %>% 
+                               select(fitc_a_median_t0:o2_pi_a_m) %>% 
+                                select(ends_with("m")), 
+                      method = "standardize",
+                      na.rm=TRUE)
+    da_pad_euc<-vegan::vegdist(da_pad,"euclidean") 
+    da_pad_euc_ward<-hclust(da_pad_euc, method="ward.D")
+    plot(da_pad_euc_ward, 
+         ylab="Distância Euclidiana",
+         xlab="Acessos", hang=-1,
+         col="red", las=1,
+         cex=.6,lwd=1.5);box()
+    grupo<-cutree(da_pad_euc_ward,3)
+```
+### Análise de Agrupamento Hierárquico MORFOLOGIA MOTILIDADE E VIGOR
+
+```{r}
+    da_pad<-vegan::decostand( df %>% as.data.frame() %>% 
+                               select(conc:totais), 
+                      method = "standardize",
+                      na.rm=TRUE)
+    da_pad_euc<-vegan::vegdist(da_pad,"euclidean") 
+    da_pad_euc_ward<-hclust(da_pad_euc, method="ward.D")
+    plot(da_pad_euc_ward, 
+         ylab="Distância Euclidiana",
+         xlab="Acessos", hang=-1,
+         col="purple", las=1,
+         cex=.6,lwd=1.5);box()
+    grupo<-cutree(da_pad_euc_ward,3)
+```
