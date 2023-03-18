@@ -26,6 +26,28 @@ citomeria <- readr::read_rds("data/citomeria.rds")
 morf_mot_vig <- readr::read_rds("data/morf_mot_vig.rds")
 ```
 
+
+### Análise de Citomeria de Fluxo
+
+```{r}
+cito_var <- names(citomeria[8:length(citomeria)])
+for( i in seq_along(cito_var)){
+  name_var <- cito_var[i]
+  da <- citomeria %>% dplyr::select(grupo, coleta, touro, name_var)
+  cat(" ====================== \n", name_var,"\n ====================== \n")
+  names(da) <- c("grupo", "coleta", "touro", "y")
+  da <- da %>% drop_na()
+  grupo <- da %>%  pull(grupo)
+  touro <- da %>%  pull(touro)
+  coleta <- da %>%  pull(coleta)
+  y <- da %>%  pull(y)
+  ExpDes.pt::psub2.dic(grupo, coleta, touro,y,
+                       sigF=.1, sigT = .1,
+                       fac.names = c("grupo","coleta"))
+}
+```
+
+
 ### Juntando as bases de dados
 
 ```{r}
