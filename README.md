@@ -1948,13 +1948,14 @@ my_data_set %>%
 
 ``` r
 touros <- my_data_set %>% pull(touro) %>% unique()
+grupo <- my_data_set %>% pull(grupo)
 for( i in 1:length(touros)){
   dsa <- my_data_set %>%  filter(touro == touros[i]) %>% 
     select(fitc_a_median_t0:totais) 
   
-  if(i == 1 ) {df <- apply(dsa, 2, sum,na.rm=TRUE)
+  if(i == 1 ) {df <- apply(dsa, 2, sum, na.rm=TRUE)
   }else{
-    dfa <- apply(dsa, 2, sum,na.rm=TRUE)
+    dfa <- apply(dsa, 2, sum, na.rm=TRUE)
     df <- rbind(df,dfa)
   }
 }
@@ -1980,80 +1981,127 @@ plot(da_pad_euc_ward,
 ![](README_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
 
 ``` r
-grupo<-cutree(da_pad_euc_ward,3)
+grupo<-cutree(da_pad_euc_ward,2)
 ```
 
 ### Componentes Principais
 
 ``` r
-# pca <-  prcomp(da_pad,scale.=T)
+pca <-  prcomp(da_pad,scale.=T)
+gp <- my_data_set %>% 
+  group_by(grupo,touro) %>% 
+  summarise(m = mean(mot)) %>% 
+  pull(grupo)
+
 # # Autovalores
-# eig<-pca$sdev^2
-# print("==== Autovalores ====")
-# print(round(eig,3))
-# print("==== % da variância explicada ====")
-# ve<-eig/sum(eig)
-# print(round(ve,4))
-# print("==== % da variância explicada acumulada ====")
-# print(round(cumsum(ve),4)*100)
-# print("==== Poder Discriminante ====")
-# mcor<-cor(da_pad,pca$x)
-# corrplot::corrplot(mcor)
-# print("==== screeplot ====")
-# screeplot(pca)
-# abline(h=1)
-# print("==== Gráfico Biplot ====")
-# pc1V<-cor(da_pad,pca$x)[,1]/sd(cor(da_pad,pca$x)[,1])
-# pc2V<-cor(da_pad,pca$x)[,2]/sd(cor(da_pad,pca$x)[,2])
-# pc3V<-cor(da_pad,pca$x)[,3]/sd(cor(da_pad,pca$x)[,3])
-# pc1c<-pca$x[,1]/sd(pca$x[,1])
-# pc2c<-pca$x[,2]/sd(pca$x[,2])
-# pc3c<-pca$x[,3]/sd(pca$x[,3])
-# nv<-ncol(da)
-# 
-# bip<-data.frame(pc1c,pc2c,pc3c,touros)
-# texto <- data.frame(
-#   x = pc1V,
-#   y = pc2V,
-#   z = pc3V,
-#   label = names(da_pad)
-# )
-# nomes <- touros
-# graf<-bip %>% 
-#   ggplot(aes(x=pc1c,y=pc2c,color=nomes))+
-#   geom_point(aes(shape =nomes, color = nomes), size = 3)+ theme_minimal()+
-#   scale_shape_manual(values=16:19)+
-#   scale_color_manual(values=c("#009E73", "#999999","#D55E00", "#A6761D"))+
-#   #annotate(geom="text", x=pc1V, y=pc2V, label=names(pc1V),
-#   #            color="black",font=3)+
-#   geom_vline(aes(xintercept=0),
-#              color="black", size=1)+
-#   geom_hline(aes(yintercept=0),
-#              color="black", size=1)+
-#   annotate(geom="segment",
-#            x=rep(0,length(da)),
-#            xend=texto$x,
-#            y=rep(0,length(da)),
-#            yend=texto$y,color="black",lwd=.5)+
-#   geom_label(data=texto,aes(x=x,y=y,label=label),
-#              color="black",angle=0,fontface="bold",size=4,fill="white")+
-#   labs(x=paste("CP1 (",round(100*ve[1],2),"%)",sep=""),
-#        y=paste("CP2 (",round(100*ve[2],2),"%)",sep=""),
-#        color="",shape="")+
-#   theme(legend.position = "top")
-# print(graf)
-# 
-# print("==== Tabela da correlação dos atributos com cada PC ====")
-# ck<-sum(pca$sdev^2>=0.98)
-# tabelapca<-vector()
-# for( l in 1:ck) tabelapca<-cbind(tabelapca,mcor[,l])
-# colnames(tabelapca)<-paste(rep(c("PC"),ck),1:ck,sep="")
-# pcat<-round(tabelapca,3)
-# tabelapca<-tabelapca[order(abs(tabelapca[,1])),]
-# print(tabelapca)
-# 
-# }
-# }
+eig<-pca$sdev^2
+print("==== Autovalores ====")
+#> [1] "==== Autovalores ===="
+print(round(eig,3))
+#>  [1] 6.771 2.739 1.422 0.861 0.084 0.060 0.040 0.011 0.007 0.003 0.001 0.000
+print("==== % da variância explicada ====")
+#> [1] "==== % da variância explicada ===="
+ve<-eig/sum(eig)
+print(round(ve,4))
+#>  [1] 0.5643 0.2283 0.1185 0.0718 0.0070 0.0050 0.0034 0.0009 0.0006 0.0002
+#> [11] 0.0001 0.0000
+print("==== % da variância explicada acumulada ====")
+#> [1] "==== % da variância explicada acumulada ===="
+print(round(cumsum(ve),4)*100)
+#>  [1]  56.43  79.26  91.10  98.28  98.99  99.48  99.82  99.91  99.97  99.99
+#> [11] 100.00 100.00
+print("==== Poder Discriminante ====")
+#> [1] "==== Poder Discriminante ===="
+mcor<-cor(da_pad,pca$x)
+corrplot::corrplot(mcor)
+```
+
+![](README_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+
+``` r
+print("==== screeplot ====")
+#> [1] "==== screeplot ===="
+screeplot(pca)
+abline(h=1)
+```
+
+![](README_files/figure-gfm/unnamed-chunk-15-2.png)<!-- -->
+
+``` r
+print("==== Gráfico Biplot ====")
+#> [1] "==== Gráfico Biplot ===="
+pc1V<-cor(da_pad,pca$x)[,1]/sd(cor(da_pad,pca$x)[,1])
+pc2V<-cor(da_pad,pca$x)[,2]/sd(cor(da_pad,pca$x)[,2])
+pc3V<-cor(da_pad,pca$x)[,3]/sd(cor(da_pad,pca$x)[,3])
+pc1c<-pca$x[,1]/sd(pca$x[,1])
+pc2c<-pca$x[,2]/sd(pca$x[,2])
+pc3c<-pca$x[,3]/sd(pca$x[,3])
+nv<-ncol(da_pad)
+```
+
+``` r
+bip<-data.frame(pc1c,pc2c,pc3c,touros,gp)
+texto <- data.frame(
+  x = pc1V,
+  y = pc2V,
+  z = pc3V,
+  label = names(da_pad)
+)
+
+nomes <- touros
+graf<-bip %>%
+  ggplot(aes(x=pc1c,y=pc2c, color=gp))+
+  geom_point(size = 3)+ 
+  theme_minimal() +
+  scale_shape_manual(values=16:17) +
+  scale_color_manual(values=c("#009E73", "#D55E00"))+
+  annotate(geom="text", x=pc1V, y=pc2V, label=names(pc1V),
+              color="black",font=3)+
+  annotate(geom="text", x=pc1c, y=pc2c, label=names(pc1c),
+              color="gray",font=3)+
+  geom_vline(aes(xintercept=0),
+             color="black", size=1)+
+  geom_hline(aes(yintercept=0),
+             color="black", size=1)+
+  annotate(geom="segment",
+           x=rep(0,length(da_pad)),
+           xend=texto$x,
+           y=rep(0,length(da_pad)),
+           yend=texto$y,color="black",lwd=.5)+
+  geom_label(data=texto,aes(x=x,y=y,label=label),
+             color="black",angle=0,fontface="bold",size=4,fill="white")+
+  labs(x=paste("CP1 (",round(100*ve[1],2),"%)",sep=""),
+       y=paste("CP2 (",round(100*ve[2],2),"%)",sep=""),
+       color="",shape="")+
+  theme(legend.position = "top")
+print(graf)
+```
+
+![](README_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+
+``` r
+print("==== Tabela da correlação dos atributos com cada PC ====")
+#> [1] "==== Tabela da correlação dos atributos com cada PC ===="
+ck<-sum(pca$sdev^2>=0.98)
+tabelapca<-vector()
+for( l in 1:ck) tabelapca<-cbind(tabelapca,mcor[,l])
+colnames(tabelapca)<-paste(rep(c("PC"),ck),1:ck,sep="")
+pcat<-round(tabelapca,3)
+tabelapca<-tabelapca[order(abs(tabelapca[,1])),]
+print(tabelapca)
+#>                    PC1         PC2         PC3
+#> str         -0.3693865  0.86647257 -0.02152912
+#> vap          0.3723085  0.86728509  0.17790836
+#> alh          0.4333960  0.74046977  0.23699553
+#> lin         -0.5252628  0.57755277 -0.16153954
+#> concdose     0.6114359  0.19063817 -0.75907125
+#> conctotal    0.6326957  0.29533441 -0.70189826
+#> vigor.x      0.8319440  0.34056843  0.38677971
+#> mpporctotal  0.9360031 -0.01847849  0.22285081
+#> celviaveis   0.9507611 -0.20036829  0.02042318
+#> mtporctotal  0.9557885 -0.02915832  0.18606980
+#> mp           0.9668277 -0.19231361 -0.02270428
+#> mt           0.9685015 -0.19157015 -0.06114548
 ```
 
 ### Análise de Agrupamento Hierárquico CITOMERIA
@@ -2073,10 +2121,126 @@ grupo<-cutree(da_pad_euc_ward,3)
          cex=.6,lwd=1.5);box()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
 
 ``` r
     grupo<-cutree(da_pad_euc_ward,3)
+```
+
+### Componentes Principais
+
+``` r
+pca <-  prcomp(da_pad,scale.=T)
+gp <- my_data_set %>% 
+  group_by(grupo,touro) %>% 
+  summarise(m = mean(mot)) %>% 
+  pull(grupo)
+
+# # Autovalores
+eig<-pca$sdev^2
+print("==== Autovalores ====")
+#> [1] "==== Autovalores ===="
+print(round(eig,3))
+#>  [1] 5.092 2.189 1.437 0.596 0.418 0.139 0.085 0.032 0.010 0.002
+print("==== % da variância explicada ====")
+#> [1] "==== % da variância explicada ===="
+ve<-eig/sum(eig)
+print(round(ve,4))
+#>  [1] 0.5092 0.2189 0.1437 0.0596 0.0418 0.0139 0.0085 0.0032 0.0010 0.0002
+print("==== % da variância explicada acumulada ====")
+#> [1] "==== % da variância explicada acumulada ===="
+print(round(cumsum(ve),4)*100)
+#>  [1]  50.92  72.82  87.19  93.15  97.33  98.72  99.56  99.88  99.98 100.00
+print("==== Poder Discriminante ====")
+#> [1] "==== Poder Discriminante ===="
+mcor<-cor(da_pad,pca$x)
+corrplot::corrplot(mcor)
+```
+
+![](README_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
+
+``` r
+print("==== screeplot ====")
+#> [1] "==== screeplot ===="
+screeplot(pca)
+abline(h=1)
+```
+
+![](README_files/figure-gfm/unnamed-chunk-19-2.png)<!-- -->
+
+``` r
+print("==== Gráfico Biplot ====")
+#> [1] "==== Gráfico Biplot ===="
+pc1V<-cor(da_pad,pca$x)[,1]/sd(cor(da_pad,pca$x)[,1])
+pc2V<-cor(da_pad,pca$x)[,2]/sd(cor(da_pad,pca$x)[,2])
+pc3V<-cor(da_pad,pca$x)[,3]/sd(cor(da_pad,pca$x)[,3])
+pc1c<-pca$x[,1]/sd(pca$x[,1])
+pc2c<-pca$x[,2]/sd(pca$x[,2])
+pc3c<-pca$x[,3]/sd(pca$x[,3])
+nv<-ncol(da_pad)
+```
+
+``` r
+bip<-data.frame(pc1c,pc2c,pc3c,touros,gp)
+texto <- data.frame(
+  x = pc1V,
+  y = pc2V,
+  z = pc3V,
+  label = names(da_pad)
+)
+
+nomes <- touros
+graf<-bip %>%
+  ggplot(aes(x=pc1c,y=pc2c, color=gp))+
+  geom_point(size = 3)+ 
+  theme_minimal() +
+  scale_shape_manual(values=16:17) +
+  scale_color_manual(values=c("#009E73", "#D55E00"))+
+  annotate(geom="text", x=pc1V, y=pc2V, label=names(pc1V),
+              color="black",font=3)+
+  annotate(geom="text", x=pc1c, y=pc2c, label=names(pc1c),
+              color="gray",font=3)+
+  geom_vline(aes(xintercept=0),
+             color="black", size=1)+
+  geom_hline(aes(yintercept=0),
+             color="black", size=1)+
+  annotate(geom="segment",
+           x=rep(0,length(da_pad)),
+           xend=texto$x,
+           y=rep(0,length(da_pad)),
+           yend=texto$y,color="black",lwd=.5)+
+  geom_label(data=texto,aes(x=x,y=y,label=label),
+             color="black",angle=0,fontface="bold",size=4,fill="white")+
+  labs(x=paste("CP1 (",round(100*ve[1],2),"%)",sep=""),
+       y=paste("CP2 (",round(100*ve[2],2),"%)",sep=""),
+       color="",shape="")+
+  theme(legend.position = "top")
+print(graf)
+```
+
+![](README_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
+
+``` r
+print("==== Tabela da correlação dos atributos com cada PC ====")
+#> [1] "==== Tabela da correlação dos atributos com cada PC ===="
+ck<-sum(pca$sdev^2>=0.98)
+tabelapca<-vector()
+for( l in 1:ck) tabelapca<-cbind(tabelapca,mcor[,l])
+colnames(tabelapca)<-paste(rep(c("PC"),ck),1:ck,sep="")
+pcat<-round(tabelapca,3)
+tabelapca<-tabelapca[order(abs(tabelapca[,1])),]
+print(tabelapca)
+#>                         PC1           PC2         PC3
+#> o2_pi_a_m       -0.06035554 -5.555608e-01  0.73017628
+#> stable_apc_a_m  -0.37297941 -8.450739e-01 -0.31003000
+#> hpm_apc_a_m     -0.41455255 -8.189634e-01 -0.32298343
+#> mpal_percent_m  -0.58659324 -1.523498e-01  0.59328828
+#> mpai_percent_m   0.79794202 -4.400225e-01 -0.02187280
+#> hpm_percent_m    0.82224642 -4.714495e-01  0.01002061
+#> mplai_percent_m -0.85841112 -7.170353e-02 -0.33681747
+#> pi_a_median_m   -0.86124479  5.421968e-05  0.40337810
+#> mpial_percent_m  0.86220199 -2.106295e-01  0.27212255
+#> o2_percent_m    -0.94808324 -8.571368e-02  0.02591618
 ```
 
 ### Análise de Agrupamento Hierárquico MORFOLOGIA MOTILIDADE E VIGOR
@@ -2095,8 +2259,120 @@ grupo<-cutree(da_pad_euc_ward,3)
          cex=.6,lwd=1.5);box()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
 
 ``` r
     grupo<-cutree(da_pad_euc_ward,3)
+```
+
+### Componentes Principais
+
+``` r
+pca <-  prcomp(da_pad,scale.=T)
+gp <- my_data_set %>% 
+  group_by(grupo,touro) %>% 
+  summarise(m = mean(mot)) %>% 
+  pull(grupo)
+
+# # Autovalores
+eig<-pca$sdev^2
+print("==== Autovalores ====")
+#> [1] "==== Autovalores ===="
+print(round(eig,3))
+#> [1] 3.371 1.388 0.766 0.434 0.040 0.000
+print("==== % da variância explicada ====")
+#> [1] "==== % da variância explicada ===="
+ve<-eig/sum(eig)
+print(round(ve,4))
+#> [1] 0.5619 0.2314 0.1277 0.0724 0.0067 0.0000
+print("==== % da variância explicada acumulada ====")
+#> [1] "==== % da variância explicada acumulada ===="
+print(round(cumsum(ve),4)*100)
+#> [1]  56.19  79.33  92.09  99.33 100.00 100.00
+print("==== Poder Discriminante ====")
+#> [1] "==== Poder Discriminante ===="
+mcor<-cor(da_pad,pca$x)
+corrplot::corrplot(mcor)
+```
+
+![](README_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
+
+``` r
+print("==== screeplot ====")
+#> [1] "==== screeplot ===="
+screeplot(pca)
+abline(h=1)
+```
+
+![](README_files/figure-gfm/unnamed-chunk-23-2.png)<!-- -->
+
+``` r
+print("==== Gráfico Biplot ====")
+#> [1] "==== Gráfico Biplot ===="
+pc1V<-cor(da_pad,pca$x)[,1]/sd(cor(da_pad,pca$x)[,1])
+pc2V<-cor(da_pad,pca$x)[,2]/sd(cor(da_pad,pca$x)[,2])
+pc3V<-cor(da_pad,pca$x)[,3]/sd(cor(da_pad,pca$x)[,3])
+pc1c<-pca$x[,1]/sd(pca$x[,1])
+pc2c<-pca$x[,2]/sd(pca$x[,2])
+pc3c<-pca$x[,3]/sd(pca$x[,3])
+nv<-ncol(da_pad)
+```
+
+``` r
+bip<-data.frame(pc1c,pc2c,pc3c,touros,gp)
+texto <- data.frame(
+  x = pc1V,
+  y = pc2V,
+  z = pc3V,
+  label = names(da_pad)
+)
+
+nomes <- touros
+graf<-bip %>%
+  ggplot(aes(x=pc1c,y=pc2c, color=gp))+
+  geom_point(size = 3)+ 
+  theme_minimal() +
+  scale_shape_manual(values=16:17) +
+  scale_color_manual(values=c("#009E73", "#D55E00"))+
+  annotate(geom="text", x=pc1V, y=pc2V, label=names(pc1V),
+              color="black",font=3)+
+  annotate(geom="text", x=pc1c, y=pc2c, label=names(pc1c),
+              color="gray",font=3)+
+  geom_vline(aes(xintercept=0),
+             color="black", size=1)+
+  geom_hline(aes(yintercept=0),
+             color="black", size=1)+
+  annotate(geom="segment",
+           x=rep(0,length(da_pad)),
+           xend=texto$x,
+           y=rep(0,length(da_pad)),
+           yend=texto$y,color="black",lwd=.5)+
+  geom_label(data=texto,aes(x=x,y=y,label=label),
+             color="black",angle=0,fontface="bold",size=4,fill="white")+
+  labs(x=paste("CP1 (",round(100*ve[1],2),"%)",sep=""),
+       y=paste("CP2 (",round(100*ve[2],2),"%)",sep=""),
+       color="",shape="")+
+  theme(legend.position = "top")
+print(graf)
+```
+
+![](README_files/figure-gfm/unnamed-chunk-24-1.png)<!-- -->
+
+``` r
+print("==== Tabela da correlação dos atributos com cada PC ====")
+#> [1] "==== Tabela da correlação dos atributos com cada PC ===="
+ck<-sum(pca$sdev^2>=0.98)
+tabelapca<-vector()
+for( l in 1:ck) tabelapca<-cbind(tabelapca,mcor[,l])
+colnames(tabelapca)<-paste(rep(c("PC"),ck),1:ck,sep="")
+pcat<-round(tabelapca,3)
+tabelapca<-tabelapca[order(abs(tabelapca[,1])),]
+print(tabelapca)
+#>                PC1         PC2
+#> conc     0.3366476  0.77507217
+#> maior    0.6063997  0.63461273
+#> menor    0.7396702 -0.55358061
+#> mot     -0.8792023 -0.02209400
+#> totais   0.8838442 -0.27853008
+#> vigor.y -0.8883444  0.01073456
 ```
